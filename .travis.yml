@@ -1,7 +1,34 @@
 language: rust
+cache: cargo
+dist: trusty
+os:
+  - linux
+  - osx
+# Run builds for all the supported trains
 rust:
-  - 1.9.0
-
+  - nightly
+  - beta
+  - stable
+  - 1.0.0
+# Add clippy
+before_script:
+  - |
+    if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
+      ( ( cargo install clippy && export CLIPPY=true ) || export CLIPPY=false );
+    fi
+  - export PATH=$PATH:~/.cargo/bin
+# The main build
+script:
+  - cd hello/
+  - cargo build
+  - cargo test
+  - |
+    if [[ "$TRAVIS_RUST_VERSION" == "nightly" && $CLIPPY ]]; then
+      cargo clippy
+    fi
+sudo: true
+before_install:
+  - sudo apt-get update
 addons:
   apt:
     packages:
@@ -12,17 +39,30 @@ addons:
       - gcc
       - binutils-dev
 
-after_success: |
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-  tar xzf master.tar.gz &&
-  cd kcov-master &&
-  mkdir build &&
-  cd build &&
-  cmake .. &&
-  make &&
-  sudo make install &&
-  cd ../.. &&
-  rm -rf kcov-master &&
-  kcov --exclude-pattern=/.cargo,/usr/lib --verify target/cov target/debug/hello-ceea0aa802525423-* &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+# Upload docs
+after_success:
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" && "$TRAVIS_PULL_REQUEST" = "false" && "$TRAVIS_BRANCH" == "master" ]]; then
+      cargo doc &&
+      echo "<meta http-equiv=refresh content=0;url=os_balloon/index.html>" > target/doc/index.html &&
+      git clone https://github.com/davisp/ghp-import.git &&
+      ./ghp-import/ghp_import.py -n -p -f -m "Documentation upload" -r https://"$GH_TOKEN"@github.com/"$TRAVIS_REPO_SLUG.git" target/doc &&
+      echo "Uploaded documentation"
+    fi
+  # Coverage report
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" ]]; then
+      wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
+      tar xzf master.tar.gz &&
+      cd kcov-master &&
+      mkdir build &&
+      cd build &&
+      cmake .. &&
+      make &&
+      sudo make install &&
+      cd ../.. &&
+      rm -rf kcov-master &&
+      for file in target/debug/examplerust-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+      bash <(curl -s https://codecov.io/bash) &&
+      echo "Uploaded code coverage"
+    fi
