@@ -53,8 +53,8 @@ after_success:
       cd kcov-master &&
       mkdir build &&
       cd build &&
-      sudo cmake .. &&
-      sudo make &&
+      cmake .. &&
+      make &&
       sudo make install &&
       make install DESTDIR=../../kcov-build &&
       cd ../.. &&
