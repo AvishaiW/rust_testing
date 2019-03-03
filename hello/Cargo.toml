@@ -1,0 +1,7 @@
+[package]
+name = "hello"
+version = "0.0.1"
+
+[badges]
+travis-ci = { repository = "Razican/vsop87-rs", branch = "master" }
+codecov = { repository = "Razican/vsop87-rs", branch = "master", service = "github" }
