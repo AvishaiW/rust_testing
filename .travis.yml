@@ -9,6 +9,10 @@ rust:
   - beta
   - stable
   - 1.0.0
+matrix:
+  allow_failures:
+    - rust: nightly
+
 # Add clippy
 before_script:
   - |
@@ -37,6 +41,7 @@ addons:
       - cmake
       - gcc
       - binutils-dev
+      - libiberty-dev
 
 # Upload docs
 after_success:
@@ -59,9 +64,10 @@ after_success:
       cmake .. &&
       make &&
       sudo make install &&
+      make install DESTDIR=../../kcov-build &&
       cd ../.. &&
       rm -rf kcov-master &&
-      for file in target/debug/examplerust-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
+      for file in target/debug/hello-*[^\.d]; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
       bash <(curl -s https://codecov.io/bash) &&
       echo "Uploaded code coverage"
     fi
