@@ -1,5 +1,4 @@
 
-
 fn main() {
     println!("{}", add(14, 18));
 }

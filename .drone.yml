@@ -1,0 +1,9 @@
+pipeline:
+  hello:
+    image: enigmampc/enigma-core:0.0.5
+    commands:
+      - . /root/.cargo/env
+      - cd hello && RUSTFLAGS=-Awarnings cargo test
+  codecov:
+    image: robertstettner/drone-codecov
+    token: 0f164de0-02e0-4ee8-8f28-cfa1fa17879d
